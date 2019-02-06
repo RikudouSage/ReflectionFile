@@ -82,6 +82,7 @@ final class ReflectionFile
     public function containsClass(): bool
     {
         $this->parse();
+
         return !is_null($this->class);
     }
 
@@ -98,6 +99,7 @@ final class ReflectionFile
         }
 
         assert(is_string($this->namespace));
+
         return $this->namespace;
     }
 
@@ -107,6 +109,7 @@ final class ReflectionFile
     public function containsNamespace(): bool
     {
         $this->parse();
+
         return !is_null($this->namespace);
     }
 
@@ -116,6 +119,7 @@ final class ReflectionFile
     public function containsInlineHtml(): bool
     {
         $this->parse();
+
         return $this->inlineHtml;
     }
 
@@ -125,6 +129,7 @@ final class ReflectionFile
     public function containsPhpCode(): bool
     {
         $this->parse();
+
         return $this->containsPhpCode;
     }
 
@@ -134,6 +139,7 @@ final class ReflectionFile
     public function printsOutput(): bool
     {
         $this->parse();
+
         return $this->printsOutput;
     }
 
