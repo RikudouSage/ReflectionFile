@@ -30,6 +30,8 @@ $reflection->containsInlineHtml();
 $reflection->containsPhpCode();
 // true if the file contains echo or print statements
 $reflection->printsOutput();
+// true if the file contains functions (not methods)
+$reflection->containsFunctions();
 
 try {
     // returns the namespace as a string, throws exception if the
@@ -50,6 +52,15 @@ try {
 } catch (ReflectionException $exception) {
     var_dump("The class does not contain a class!");
 }
+
+// returns array with \ReflectionFunction instances
+// can throw exception if the functions could not be found
+// which happnes when the file is not included
+foreach ($reflection->getFunctions() as $function) {
+    var_dump("Function name: {$function->getName()}");
+    
+}
+
 ```
 
 ## Limitations
