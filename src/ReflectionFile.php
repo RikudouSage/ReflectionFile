@@ -153,9 +153,15 @@ final class ReflectionFile
                 'none' => 0,
                 'classParsing' => 1,
                 'namespaceParsing' => 2,
+                'insideClass' => 3,
             ];
 
             $currentMode = $modes['none'];
+
+            $braces = [
+                'opening' => 0,
+                'closing' => 0,
+            ];
 
             $tokens = token_get_all($content);
             foreach ($tokens as $token) {
@@ -203,8 +209,28 @@ final class ReflectionFile
                             $this->class .= $token->getContent();
                             break;
                         case T_UNKNOWN:
-                            $currentMode = $modes['none'];
+                            if ($token->getContent() === '{') {
+                                $braces['opening'] = 1;
+                                $braces['closing'] = 0;
+                                $currentMode = $modes['insideClass'];
+                            }
                             break;
+                    }
+                } elseif ($currentMode === $modes['insideClass']) {
+                    if ($braces['opening'] === $braces['closing']) {
+                        $braces['opening'] = 0;
+                        $braces['closing'] = 0;
+                        $currentMode = $modes['none'];
+                    } else {
+                        if ($token->getType() === T_UNKNOWN) {
+                            switch ($token->getContent()) {
+                                case '{':
+                                    $braces['opening']++;
+                                    break;
+                                case '}':
+                                    $braces['closing']++;
+                            }
+                        }
                     }
                 }
             }
