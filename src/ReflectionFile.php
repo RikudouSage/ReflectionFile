@@ -43,6 +43,11 @@ final class ReflectionFile
     private $namespace = null;
 
     /**
+     * @var array
+     */
+    private $functions = [];
+
+    /**
      * @param string $file
      *
      * @throws ReflectionException
@@ -143,6 +148,35 @@ final class ReflectionFile
         return $this->printsOutput;
     }
 
+    /**
+     * @throws \ReflectionException
+     *
+     * @return \ReflectionFunction[]
+     */
+    public function getFunctions(): array
+    {
+        $this->parse();
+        $result = [];
+        foreach ($this->functions as $function) {
+            if ($this->containsNamespace()) {
+                $function = $this->getNamespace() . '\\' . $function;
+            }
+            $result[] = new \ReflectionFunction($function);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function containsFunctions(): bool
+    {
+        $this->parse();
+
+        return !!count($this->functions);
+    }
+
     private function parse()
     {
         if (!$this->parsed) {
@@ -154,6 +188,8 @@ final class ReflectionFile
                 'classParsing' => 1,
                 'namespaceParsing' => 2,
                 'insideClass' => 3,
+                'insideFunction' => 4,
+                'functionParsing' => 5,
             ];
 
             $currentMode = $modes['none'];
@@ -162,6 +198,8 @@ final class ReflectionFile
                 'opening' => 0,
                 'closing' => 0,
             ];
+
+            $functionName = '';
 
             $tokens = token_get_all($content);
             foreach ($tokens as $token) {
@@ -182,6 +220,9 @@ final class ReflectionFile
                             break;
                         case T_NAMESPACE:
                             $currentMode = $modes['namespaceParsing'];
+                            break;
+                        case T_FUNCTION:
+                            $currentMode = $modes['functionParsing'];
                             break;
                         case T_CLASS:
                             $currentMode = $modes['classParsing'];
@@ -220,6 +261,35 @@ final class ReflectionFile
                     if ($braces['opening'] === $braces['closing']) {
                         $braces['opening'] = 0;
                         $braces['closing'] = 0;
+                        $currentMode = $modes['none'];
+                    } else {
+                        if ($token->getType() === T_UNKNOWN) {
+                            switch ($token->getContent()) {
+                                case '{':
+                                    $braces['opening']++;
+                                    break;
+                                case '}':
+                                    $braces['closing']++;
+                            }
+                        }
+                    }
+                } elseif ($currentMode === $modes['functionParsing']) {
+                    switch ($token->getType()) {
+                        case T_STRING:
+                            $functionName .= $token->getContent();
+                            break;
+                        case T_UNKNOWN:
+                            if ($token->getContent() === '{') {
+                                $braces['opening'] = 1;
+                                $braces['closing'] = 0;
+                                $currentMode = $modes['insideFunction'];
+                                $this->functions[] = $functionName;
+                                $functionName = '';
+                            }
+                            break;
+                    }
+                } elseif ($currentMode === $modes['insideFunction']) {
+                    if ($braces['opening'] === $braces['closing']) {
                         $currentMode = $modes['none'];
                     } else {
                         if ($token->getType() === T_UNKNOWN) {

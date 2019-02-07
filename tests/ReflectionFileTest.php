@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: root
- * Date: 6.2.19
- * Time: 23:11
- */
 
 namespace Rikudou\Tests;
 
@@ -43,6 +37,7 @@ class ReflectionFileTest extends TestCase
     public function testContainsInlineHtml()
     {
         $this->assertFalse($this->getClassWithEchoStatementFile()->containsInlineHtml());
+        $this->assertFalse($this->getFunctionsFile()->containsInlineHtml());
         $this->assertTrue($this->getInlineHtmlFile()->containsInlineHtml());
         $this->assertFalse($this->getNamespacedClassFile()->containsInlineHtml());
         $this->assertFalse($this->getNonNamespacedClassFile()->containsInlineHtml());
@@ -53,6 +48,7 @@ class ReflectionFileTest extends TestCase
     public function testContainsClass()
     {
         $this->assertTrue($this->getClassWithEchoStatementFile()->containsClass());
+        $this->assertFalse($this->getFunctionsFile()->containsClass());
         $this->assertFalse($this->getInlineHtmlFile()->containsClass());
         $this->assertTrue($this->getNamespacedClassFile()->containsClass());
         $this->assertTrue($this->getNonNamespacedClassFile()->containsClass());
@@ -63,6 +59,7 @@ class ReflectionFileTest extends TestCase
     public function testGetNamespace()
     {
         $this->assertEquals('Rikudou\Tests\Data', $this->getClassWithEchoStatementFile()->getNamespace());
+        $this->assertEquals('Rikudou\Tests\Data', $this->getFunctionsFile()->getNamespace());
 
         try {
             $this->getInlineHtmlFile()->getNamespace();
@@ -93,6 +90,7 @@ class ReflectionFileTest extends TestCase
     public function testPrintsOutput()
     {
         $this->assertFalse($this->getClassWithEchoStatementFile()->printsOutput());
+        $this->assertFalse($this->getFunctionsFile()->printsOutput());
         $this->assertTrue($this->getInlineHtmlFile()->printsOutput());
         $this->assertFalse($this->getNamespacedClassFile()->printsOutput());
         $this->assertFalse($this->getNonNamespacedClassFile()->printsOutput());
@@ -103,6 +101,7 @@ class ReflectionFileTest extends TestCase
     public function testContainsNamespace()
     {
         $this->assertTrue($this->getClassWithEchoStatementFile()->containsNamespace());
+        $this->assertTrue($this->getFunctionsFile()->containsNamespace());
         $this->assertFalse($this->getInlineHtmlFile()->containsNamespace());
         $this->assertTrue($this->getNamespacedClassFile()->containsNamespace());
         $this->assertFalse($this->getNonNamespacedClassFile()->containsNamespace());
@@ -113,6 +112,7 @@ class ReflectionFileTest extends TestCase
     public function testContainsPhpCode()
     {
         $this->assertTrue($this->getClassWithEchoStatementFile()->containsPhpCode());
+        $this->assertTrue($this->getFunctionsFile()->containsPhpCode());
         $this->assertTrue($this->getInlineHtmlFile()->containsPhpCode());
         $this->assertTrue($this->getNamespacedClassFile()->containsPhpCode());
         $this->assertTrue($this->getNonNamespacedClassFile()->containsPhpCode());
@@ -123,6 +123,12 @@ class ReflectionFileTest extends TestCase
     public function testGetClass()
     {
         $this->assertEquals(ClassWithEchoStatement::class, $this->getClassWithEchoStatementFile()->getClass()->getName());
+
+        try {
+            $this->getFunctionsFile()->getClass();
+            $this->fail('Expected exception');
+        } catch (ReflectionException $e) {
+        }
 
         try {
             $this->getInlineHtmlFile()->getClass();
@@ -145,9 +151,47 @@ class ReflectionFileTest extends TestCase
         }
     }
 
+    public function testContainsFunctions()
+    {
+        $this->assertFalse($this->getClassWithEchoStatementFile()->containsFunctions());
+        $this->assertTrue($this->getFunctionsFile()->containsFunctions());
+        $this->assertFalse($this->getInlineHtmlFile()->containsFunctions());
+        $this->assertFalse($this->getNamespacedClassFile()->containsFunctions());
+        $this->assertFalse($this->getNonNamespacedClassFile()->containsFunctions());
+        $this->assertFalse($this->getNonPhpContentFile()->containsFunctions());
+        $this->assertFalse($this->getOutputPrintingFile()->containsFunctions());
+    }
+
+    public function testGetFunctions()
+    {
+        $this->assertEquals([], $this->getClassWithEchoStatementFile()->getFunctions());
+
+        $functions = $this->getFunctionsFile()->getFunctions();
+        $this->assertNotEmpty($functions);
+        $this->assertCount(2, $functions);
+        $this->assertContainsOnlyInstancesOf(\ReflectionFunction::class, $functions);
+        foreach ($functions as $function) {
+            $this->assertContains($function->getName(), [
+                'Rikudou\Tests\Data\myFunction1',
+                'Rikudou\Tests\Data\myFunction2',
+            ]);
+        }
+
+        $this->assertEquals([], $this->getInlineHtmlFile()->getFunctions());
+        $this->assertEquals([], $this->getNamespacedClassFile()->getFunctions());
+        $this->assertEquals([], $this->getNonNamespacedClassFile()->getFunctions());
+        $this->assertEquals([], $this->getNonPhpContentFile()->getFunctions());
+        $this->assertEquals([], $this->getOutputPrintingFile()->getFunctions());
+    }
+
     private function getClassWithEchoStatementFile()
     {
         return $this->getReflection('ClassWithEchoStatement.php');
+    }
+
+    private function getFunctionsFile()
+    {
+        return $this->getReflection('FunctionsFile.php');
     }
 
     private function getInlineHtmlFile()
