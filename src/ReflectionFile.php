@@ -184,12 +184,13 @@ final class ReflectionFile
             assert(is_string($content));
 
             $modes = [
-                'none' => 0,
-                'classParsing' => 1,
-                'namespaceParsing' => 2,
-                'insideClass' => 3,
-                'insideFunction' => 4,
-                'functionParsing' => 5,
+                'none' => 1 << 0,
+                'classParsing' => 1 << 1,
+                'namespaceParsing' => 1 << 2,
+                'insideClass' => 1 << 3,
+                'insideFunction' => 1 << 4,
+                'functionParsing' => 1 << 5,
+                'extendsImplements' => 1 << 6,
             ];
 
             $currentMode = $modes['none'];
@@ -205,7 +206,7 @@ final class ReflectionFile
             foreach ($tokens as $token) {
                 $token = new Token($token);
 
-                if ($currentMode === $modes['none']) {
+                if ($currentMode & $modes['none']) {
                     switch ($token->getType()) {
                         case T_INLINE_HTML:
                             $this->inlineHtml = true;
@@ -228,7 +229,7 @@ final class ReflectionFile
                             $currentMode = $modes['classParsing'];
                             break;
                     }
-                } elseif ($currentMode === $modes['namespaceParsing']) {
+                } elseif ($currentMode & $modes['namespaceParsing']) {
                     if (is_null($this->namespace)) {
                         $this->namespace = '';
                     }
@@ -241,9 +242,14 @@ final class ReflectionFile
                             $currentMode = $modes['none'];
                             break;
                     }
-                } elseif ($currentMode === $modes['classParsing']) {
+                } elseif ($currentMode & $modes['classParsing']) {
                     if (is_null($this->class)) {
                         $this->class = '';
+                    }
+                    if ($currentMode & $modes['extendsImplements']) {
+                        if ($token->getType() !== T_UNKNOWN && $token->getContent() !== '{') {
+                            continue;
+                        }
                     }
                     switch ($token->getType()) {
                         case T_STRING:
@@ -256,8 +262,12 @@ final class ReflectionFile
                                 $currentMode = $modes['insideClass'];
                             }
                             break;
+                        case T_IMPLEMENTS:
+                        case T_EXTENDS:
+                            $currentMode = $modes['classParsing'] | $modes['extendsImplements'];
+                            break;
                     }
-                } elseif ($currentMode === $modes['insideClass']) {
+                } elseif ($currentMode & $modes['insideClass']) {
                     if ($braces['opening'] === $braces['closing']) {
                         $braces['opening'] = 0;
                         $braces['closing'] = 0;
@@ -273,7 +283,7 @@ final class ReflectionFile
                             }
                         }
                     }
-                } elseif ($currentMode === $modes['functionParsing']) {
+                } elseif ($currentMode & $modes['functionParsing']) {
                     switch ($token->getType()) {
                         case T_STRING:
                             $functionName .= $token->getContent();
@@ -288,7 +298,7 @@ final class ReflectionFile
                             }
                             break;
                     }
-                } elseif ($currentMode === $modes['insideFunction']) {
+                } elseif ($currentMode & $modes['insideFunction']) {
                     if ($braces['opening'] === $braces['closing']) {
                         $currentMode = $modes['none'];
                     } else {
