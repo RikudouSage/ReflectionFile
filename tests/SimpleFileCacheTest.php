@@ -14,7 +14,6 @@ use Rikudou\Cache\SimpleFileCache;
 
 class SimpleFileCacheTest extends TestCase
 {
-
     public static function setUpBeforeClass()
     {
         (new SimpleFileCache(self::getCacheDirectory()))->clearAll();
@@ -23,7 +22,7 @@ class SimpleFileCacheTest extends TestCase
     public static function tearDownAfterClass()
     {
         self::setUpBeforeClass();
-        @unlink(sys_get_temp_dir() . "/rikudou-reflection-random-directory");
+        @unlink(sys_get_temp_dir() . '/rikudou-reflection-random-directory');
     }
 
     public function testIsValid()
@@ -110,7 +109,7 @@ class SimpleFileCacheTest extends TestCase
         new SimpleFileCache($directory('test2'));
         $this->assertTrue(file_exists($directory('test2')), 'The directory does not exist');
         new SimpleFileCache();
-        $this->assertTrue(file_exists(sys_get_temp_dir() . "/rikudou-reflection-file-cache"));
+        $this->assertTrue(file_exists(sys_get_temp_dir() . '/rikudou-reflection-file-cache'));
 
         rmdir($directory('test1'));
         rmdir($directory('test2'));
@@ -118,7 +117,7 @@ class SimpleFileCacheTest extends TestCase
 
     public function test__constructExistingFile()
     {
-        $dir = sys_get_temp_dir() . "/rikudou-reflection-random-directory";
+        $dir = sys_get_temp_dir() . '/rikudou-reflection-random-directory';
         $this->expectException(\LogicException::class);
         touch($dir);
         new SimpleFileCache($dir);
@@ -126,11 +125,11 @@ class SimpleFileCacheTest extends TestCase
 
     public function test__constructReadonlyDirectory()
     {
-        if (!file_exists("/dev/null")) {
+        if (!file_exists('/dev/null')) {
             $this->markTestSkipped('/dev/null does not exist, skipping test');
         }
         $this->expectException(\LogicException::class);
-        new SimpleFileCache("/dev/null/my-directory");
+        new SimpleFileCache('/dev/null/my-directory');
     }
 
     public function testClearAll()
@@ -163,6 +162,6 @@ class SimpleFileCacheTest extends TestCase
 
     private static function getCacheDirectory(): string
     {
-        return sys_get_temp_dir() . "/rikudou-reflection-file-tests";
+        return sys_get_temp_dir() . '/rikudou-reflection-file-tests';
     }
 }

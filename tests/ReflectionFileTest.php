@@ -269,7 +269,6 @@ class ReflectionFileTest extends TestCase
         $instance = $newInstance();
         $this->assertEquals(AbstractClass::class, $instance->getClass()->getName());
 
-
         // reset
         $cache->attemptedToInvalidate = false;
         $cache->attemptedToStore = false;
