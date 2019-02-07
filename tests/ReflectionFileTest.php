@@ -269,6 +269,11 @@ class ReflectionFileTest extends TestCase
         $instance = $newInstance();
         $this->assertEquals(AbstractClass::class, $instance->getClass()->getName());
 
+
+        // reset
+        $cache->attemptedToInvalidate = false;
+        $cache->attemptedToStore = false;
+
         // the real parsed result should be returned if the current item is not cached yet
         $cache->isValid = true;
         $cache->isCached = false;
@@ -453,6 +458,10 @@ class ReflectionFileTest extends TestCase
             public function store(CachedData $cachedData)
             {
                 $this->attemptedToStore = true;
+            }
+
+            public function clearAll(): void
+            {
             }
         };
     }

@@ -29,7 +29,7 @@ final class SimpleFileCache implements CacheInterface
                 throw new \LogicException("The path '{$directory}' already exists and is not an directory");
             }
         } else {
-            if (!mkdir($directory, 0777, true)) {
+            if (!@mkdir($directory, 0777, true)) {
                 throw new \LogicException("The path '{$directory}' does not exist and could not be created");
             }
         }
@@ -69,6 +69,10 @@ final class SimpleFileCache implements CacheInterface
      */
     public function isValid(): bool
     {
+        if (!$this->isCached()) {
+            return false;
+        }
+
         return filemtime($this->getCachePath()) >= $this->modified;
     }
 
@@ -107,6 +111,25 @@ final class SimpleFileCache implements CacheInterface
         }
 
         file_put_contents($this->getCachePath(), $content);
+    }
+
+    /**
+     * Clears all cached files
+     */
+    public function clearAll(): void
+    {
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(
+                $this->directory
+            )
+        );
+
+        foreach ($iterator as $file) {
+            assert($file instanceof \SplFileInfo);
+            if ($file->isFile()) {
+                unlink($file->getPathname());
+            }
+        }
     }
 
     /**

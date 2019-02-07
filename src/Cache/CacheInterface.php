@@ -44,4 +44,9 @@ interface CacheInterface
      * @param CachedData $cachedData
      */
     public function store(CachedData $cachedData);
+
+    /**
+     * Clears all cached files
+     */
+    public function clearAll(): void;
 }
