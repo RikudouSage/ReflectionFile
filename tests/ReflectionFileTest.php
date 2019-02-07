@@ -3,6 +3,8 @@
 namespace Rikudou\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Rikudou\Cache\CachedData;
+use Rikudou\Cache\CacheInterface;
 use Rikudou\Exception\ReflectionException;
 use Rikudou\ReflectionFile;
 use Rikudou\Tests\Data\AbstractClass;
@@ -216,6 +218,81 @@ class ReflectionFileTest extends TestCase
         $this->assertEquals([], $this->getOutputPrintingFile()->getFunctions());
     }
 
+    public function testCache()
+    {
+        $cachedData = new CachedData();
+        $cachedData->setClass('NamespacedClass');
+        $cachedData->setNamespace('Rikudou\Tests\Data');
+        $cachedData->setFunctions([
+            'myFunction1',
+        ]);
+        $cache = $this->getFakeCache($cachedData);
+
+        // adds namespace to functions, for checking if the correct functions
+        // are returned
+        $namespacedFunctions = function () use ($cachedData) {
+            $result = [];
+            foreach ($cachedData->getFunctions() as $function) {
+                $result[] = ($cachedData->getNamespace() ?? '') . "\\{$function}";
+            }
+
+            return $result;
+        };
+
+        // new instance will be created every time to reflect the changes made to $cache
+        $newInstance = function () use (&$cache) {
+            return $this->getReflection('AbstractClass.php', $cache);
+        };
+        $instance = $newInstance();
+
+        // all stuff should be from cache
+        $this->assertEquals($cachedData->containsInlineHtml(), $instance->containsInlineHtml());
+        $this->assertEquals($cachedData->containsPhpCode(), $instance->containsPhpCode());
+        $this->assertEquals($cachedData->printsOutput(), $instance->printsOutput());
+        $this->assertEquals($cachedData->getNamespace() . '\\' . $cachedData->getClass(), $instance->getClass()->getName());
+        $this->assertEquals(NamespacedClass::class, $instance->getClass()->getName());
+        $this->assertEquals(count($cachedData->getFunctions()), count($instance->getFunctions()));
+        foreach ($instance->getFunctions() as $function) {
+            $this->assertContains($function->getName(), $namespacedFunctions());
+        }
+
+        $cache->isValid = false;
+        // it should not try to load the data anymore, so even if the cache is set to invalid it should still return
+        // fake data
+        $this->assertEquals(NamespacedClass::class, $instance->getClass()->getName());
+
+        // reset
+        $cache->attemptedToInvalidate = false;
+        $cache->attemptedToStore = false;
+
+        // now the correct data should be returned as the cache is set to not valid
+        $instance = $newInstance();
+        $this->assertEquals(AbstractClass::class, $instance->getClass()->getName());
+
+        // reset
+        $cache->attemptedToInvalidate = false;
+        $cache->attemptedToStore = false;
+
+        // the real parsed result should be returned if the current item is not cached yet
+        $cache->isValid = true;
+        $cache->isCached = false;
+        $instance = $newInstance();
+        $this->assertEquals(AbstractClass::class, $instance->getClass()->getName());
+        // if the file is not cached, the reflection should attempt to store it
+        // but it shouldn't attempt to invalidate as there is nothing to invalidate
+        $this->assertTrue($cache->attemptedToStore);
+        $this->assertFalse($cache->attemptedToInvalidate);
+
+        $cache->isCached = true;
+        $cache->isValid = false;
+        $instance = $newInstance();
+        $this->assertEquals(AbstractClass::class, $instance->getClass()->getName());
+        // if the data is cached but not valid, it should attempt to invalidate
+        // after the data is parsed from file it should try to store them in cache
+        $this->assertTrue($cache->attemptedToInvalidate);
+        $this->assertTrue($cache->attemptedToStore);
+    }
+
     private function getAbstractClassFile()
     {
         return $this->getReflection('AbstractClass.php');
@@ -271,8 +348,120 @@ class ReflectionFileTest extends TestCase
         return $this->getReflection('OutputPrintingFile.php');
     }
 
-    private function getReflection(string $file)
+    private function getReflection(string $file, CacheInterface $cache = null)
     {
-        return new ReflectionFile(__DIR__ . "/Data/{$file}");
+        return new ReflectionFile(__DIR__ . "/Data/{$file}", $cache);
+    }
+
+    private function getFakeCache(?CachedData $initialData = null)
+    {
+        return new class($initialData) implements CacheInterface {
+            /**
+             * @var string
+             */
+            public $filePath;
+
+            /**
+             * @var int
+             */
+            public $modified;
+
+            /**
+             * @var bool
+             */
+            public $isCached = true;
+
+            /**
+             * @var bool
+             */
+            public $isValid = true;
+
+            /**
+             * @var CachedData;
+             */
+            public $cachedData;
+
+            /**
+             * @var bool
+             */
+            public $attemptedToStore = false;
+
+            /**
+             * @var bool
+             */
+            public $attemptedToInvalidate = false;
+
+            public function __construct(CachedData $cachedData)
+            {
+                if (is_null($cachedData)) {
+                    $cachedData = new CachedData();
+                }
+                $this->cachedData = $cachedData;
+            }
+
+            /**
+             * This method is called at the very beginning and gives the class data to work on.
+             *
+             * @param string $filePath The absolute path to the file
+             * @param int    $modified The unix timestamp of when the file was last modified
+             */
+            public function setData(string $filePath, int $modified)
+            {
+                $this->filePath = $filePath;
+                $this->modified = $modified;
+            }
+
+            /**
+             * Whether or not the cache has this file. If this returns false no other method is called.
+             *
+             * @return bool
+             */
+            public function isCached(): bool
+            {
+                return $this->isCached;
+            }
+
+            /**
+             * Whether the cache is valid or not, the cache is invalidated if not.
+             *
+             * @return bool
+             */
+            public function isValid(): bool
+            {
+                return $this->isValid;
+            }
+
+            /**
+             * This method should attempt to invalidate the cache.
+             */
+            public function invalidate(): void
+            {
+                $this->attemptedToInvalidate = true;
+            }
+
+            /**
+             * Returns instance of CachedData which contain information about the file
+             *
+             * @return CachedData
+             */
+            public function getCachedData(): CachedData
+            {
+                return $this->cachedData;
+            }
+
+            /**
+             * Called to store the newly parsed data in cache
+             *
+             * @param CachedData $cachedData
+             */
+            public function store(CachedData $cachedData)
+            {
+                $this->attemptedToStore = true;
+            }
+
+            public function clearAll(): void
+            {
+            }
+        };
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Rikudou;
 
+use Rikudou\Cache\CachedData;
+use Rikudou\Cache\CacheInterface;
 use Rikudou\Exception\ReflectionException;
 use Rikudou\Parser\Token;
 
@@ -48,16 +50,23 @@ final class ReflectionFile
     private $functions = [];
 
     /**
-     * @param string $file
+     * @var CacheInterface|null
+     */
+    private $cache;
+
+    /**
+     * @param string              $file
+     * @param CacheInterface|null $cache
      *
      * @throws ReflectionException
      */
-    public function __construct(string $file)
+    public function __construct(string $file, ?CacheInterface $cache = null)
     {
         if (!file_exists($file)) {
             throw new ReflectionException("The file '{$file}' does not exist");
         }
         $this->file = $file;
+        $this->cache = $cache;
     }
 
     /**
@@ -180,6 +189,27 @@ final class ReflectionFile
     private function parse()
     {
         if (!$this->parsed) {
+            if (!is_null($this->cache)) {
+                $this->cache->setData($this->file, filemtime($this->file) ?: 0);
+                if ($this->cache->isCached()) {
+                    if ($this->cache->isValid()) {
+                        $cachedData = $this->cache->getCachedData();
+                        $this->inlineHtml = $cachedData->containsInlineHtml();
+                        $this->containsPhpCode = $cachedData->containsPhpCode();
+                        $this->printsOutput = $cachedData->printsOutput();
+                        $this->class = $cachedData->getClass();
+                        $this->namespace = $cachedData->getNamespace();
+                        $this->functions = $cachedData->getFunctions();
+
+                        $this->parsed = true;
+
+                        return;
+                    } else {
+                        $this->cache->invalidate();
+                    }
+                }
+            }
+
             $content = file_get_contents($this->file);
             assert(is_string($content));
 
@@ -314,6 +344,19 @@ final class ReflectionFile
                     }
                 }
             }
+
+            if (!is_null($this->cache)) {
+                $cachedData = new CachedData();
+                $cachedData->setClass($this->class);
+                $cachedData->setContainsInlineHtml($this->inlineHtml);
+                $cachedData->setContainsPhpCode($this->containsPhpCode);
+                $cachedData->setFunctions($this->functions);
+                $cachedData->setNamespace($this->namespace);
+                $cachedData->setPrintsOutput($this->printsOutput);
+
+                $this->cache->store($cachedData);
+            }
+
             $this->parsed = true;
         }
     }
