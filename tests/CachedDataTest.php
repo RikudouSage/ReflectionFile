@@ -7,7 +7,6 @@ use Rikudou\Cache\CachedData;
 
 class CachedDataTest extends TestCase
 {
-
     public function testSetPrintsOutput()
     {
         $instance = $this->getInstance();
@@ -65,10 +64,10 @@ class CachedDataTest extends TestCase
     {
         $instance = $this->getInstance();
         $instance->setFunctions([
-            "test1"
+            'test1',
         ]);
         $this->assertEquals([
-            "test1"
+            'test1',
         ], $instance->getFunctions());
     }
 
@@ -96,12 +95,12 @@ class CachedDataTest extends TestCase
         $instance = $this->getInstance();
         $instance->addFunction('test');
         $this->assertEquals([
-            'test'
+            'test',
         ], $instance->getFunctions());
         $instance->addFunction('test2');
         $this->assertEquals([
             'test',
-            'test2'
+            'test2',
         ], $instance->getFunctions());
     }
 
@@ -118,7 +117,7 @@ class CachedDataTest extends TestCase
     {
         $object = CachedData::__set_state([
             'containsInlineHtml' => true,
-            'printsOutput' => true
+            'printsOutput' => true,
         ]);
 
         $this->assertEquals(true, $object->containsInlineHtml());
@@ -137,7 +136,7 @@ class CachedDataTest extends TestCase
         $exported = var_export($instance, true);
 
         /** @var CachedData $recovered */
-        $recovered = eval("return $exported;");
+        $recovered = eval("return ${exported};");
         $this->assertInstanceOf(CachedData::class, $recovered);
 
         $this->assertEquals($instance->containsPhpCode(), $recovered->containsPhpCode());
@@ -163,7 +162,7 @@ class CachedDataTest extends TestCase
         $this->assertEmpty($instance->getFunctions());
         $instance->addFunction('Test');
         $this->assertEquals([
-            'Test'
+            'Test',
         ], $instance->getFunctions());
     }
 
