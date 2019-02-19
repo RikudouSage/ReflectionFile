@@ -62,6 +62,9 @@ final class ReflectionFile
      */
     public function __construct(string $file, ?CacheInterface $cache = null)
     {
+        if (!defined('T_UNKNOWN')) {
+            require_once __DIR__ . '/../globals.php';
+        }
         if (!file_exists($file)) {
             throw new ReflectionException("The file '{$file}' does not exist");
         }
