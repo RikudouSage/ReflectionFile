@@ -53,6 +53,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonNamespacedClassFile()->containsInlineHtml());
         $this->assertTrue($this->getNonPhpContentFile()->containsInlineHtml());
         $this->assertFalse($this->getOutputPrintingFile()->containsInlineHtml());
+        $this->assertFalse($this->getFileContainingClassNameResolution()->containsInlineHtml());
     }
 
     public function testContainsClass()
@@ -68,6 +69,7 @@ class ReflectionFileTest extends TestCase
         $this->assertTrue($this->getNonNamespacedClassFile()->containsClass());
         $this->assertFalse($this->getNonPhpContentFile()->containsClass());
         $this->assertFalse($this->getOutputPrintingFile()->containsClass());
+        $this->assertFalse($this->getFileContainingClassNameResolution()->containsClass());
     }
 
     public function testGetNamespace()
@@ -103,6 +105,13 @@ class ReflectionFileTest extends TestCase
             $this->fail('Expected exception');
         } catch (ReflectionException $e) {
         }
+
+        try {
+            $this->getFileContainingClassNameResolution()->getNamespace();
+            $this->fail('Expected exception');
+        } catch (ReflectionException $e) {
+
+        }
     }
 
     public function testPrintsOutput()
@@ -118,6 +127,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonNamespacedClassFile()->printsOutput());
         $this->assertTrue($this->getNonPhpContentFile()->printsOutput());
         $this->assertTrue($this->getOutputPrintingFile()->printsOutput());
+        $this->assertFalse($this->getFileContainingClassNameResolution()->printsOutput());
     }
 
     public function testContainsNamespace()
@@ -133,6 +143,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonNamespacedClassFile()->containsNamespace());
         $this->assertFalse($this->getNonPhpContentFile()->containsNamespace());
         $this->assertFalse($this->getOutputPrintingFile()->containsNamespace());
+        $this->assertFalse($this->getFileContainingClassNameResolution()->containsNamespace());
     }
 
     public function testContainsPhpCode()
@@ -148,6 +159,7 @@ class ReflectionFileTest extends TestCase
         $this->assertTrue($this->getNonNamespacedClassFile()->containsPhpCode());
         $this->assertFalse($this->getNonPhpContentFile()->containsPhpCode());
         $this->assertTrue($this->getOutputPrintingFile()->containsPhpCode());
+        $this->assertTrue($this->getFileContainingClassNameResolution()->containsPhpCode());
     }
 
     public function testGetClass()
@@ -183,6 +195,12 @@ class ReflectionFileTest extends TestCase
             $this->fail('Expected exception');
         } catch (ReflectionException $e) {
         }
+
+        try {
+            $this->getFileContainingClassNameResolution()->getClass();
+            $this->fail('Expected exception');
+        } catch (ReflectionException $e) {
+        }
     }
 
     public function testContainsFunctions()
@@ -194,6 +212,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonNamespacedClassFile()->containsFunctions());
         $this->assertFalse($this->getNonPhpContentFile()->containsFunctions());
         $this->assertFalse($this->getOutputPrintingFile()->containsFunctions());
+        $this->assertFalse($this->getFileContainingClassNameResolution()->containsFunctions());
     }
 
     public function testGetFunctions()
@@ -216,6 +235,7 @@ class ReflectionFileTest extends TestCase
         $this->assertEquals([], $this->getNonNamespacedClassFile()->getFunctions());
         $this->assertEquals([], $this->getNonPhpContentFile()->getFunctions());
         $this->assertEquals([], $this->getOutputPrintingFile()->getFunctions());
+        $this->assertEquals([], $this->getFileContainingClassNameResolution()->getFunctions());
     }
 
     public function testCache()
@@ -346,6 +366,11 @@ class ReflectionFileTest extends TestCase
     private function getOutputPrintingFile()
     {
         return $this->getReflection('OutputPrintingFile.php');
+    }
+
+    private function getFileContainingClassNameResolution()
+    {
+        return $this->getReflection('FileContainingClassNameResolution.php');
     }
 
     private function getReflection(string $file, CacheInterface $cache = null)
