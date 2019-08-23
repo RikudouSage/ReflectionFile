@@ -236,7 +236,10 @@ final class ReflectionFile
             $functionName = '';
 
             $tokens = token_get_all($content);
-            foreach ($tokens as $token) {
+            $previousToken = function (int $step = 1) use (&$index, $tokens): Token {
+                return new Token($tokens[$index - $step]);
+            };
+            foreach ($tokens as $index => $token) {
                 $token = new Token($token);
 
                 if ($currentMode & $modes['none']) {
@@ -259,7 +262,9 @@ final class ReflectionFile
                             $currentMode = $modes['functionParsing'];
                             break;
                         case T_CLASS:
-                            $currentMode = $modes['classParsing'];
+                            if ($previousToken()->getType() !== T_DOUBLE_COLON) {
+                                $currentMode = $modes['classParsing'];
+                            }
                             break;
                     }
                 } elseif ($currentMode & $modes['namespaceParsing']) {
