@@ -224,6 +224,7 @@ final class ReflectionFile
                 'insideFunction' => 1 << 4,
                 'functionParsing' => 1 << 5,
                 'extendsImplements' => 1 << 6,
+                'importParsing' => 1 << 7,
             ];
 
             $currentMode = $modes['none'];
@@ -265,6 +266,9 @@ final class ReflectionFile
                             if ($previousToken()->getType() !== T_DOUBLE_COLON) {
                                 $currentMode = $modes['classParsing'];
                             }
+                            break;
+                        case T_USE:
+                            $currentMode = $modes['importParsing'];
                             break;
                     }
                 } elseif ($currentMode & $modes['namespaceParsing']) {
@@ -349,6 +353,10 @@ final class ReflectionFile
                                     $braces['closing']++;
                             }
                         }
+                    }
+                } elseif ($currentMode & $modes['importParsing']) {
+                    if ($token->getType() === T_UNKNOWN) {
+                        $currentMode = $modes['none'];
                     }
                 }
             }

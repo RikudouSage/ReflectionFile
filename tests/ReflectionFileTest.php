@@ -11,6 +11,7 @@ use Rikudou\Tests\Data\AbstractClass;
 use Rikudou\Tests\Data\ClassThatExtends;
 use Rikudou\Tests\Data\ClassThatExtendsAndImplements;
 use Rikudou\Tests\Data\ClassWithEchoStatement;
+use Rikudou\Tests\Data\ClassWithFunctionImport;
 use Rikudou\Tests\Data\ClassWithInterface;
 use Rikudou\Tests\Data\NamespacedClass;
 
@@ -54,6 +55,7 @@ class ReflectionFileTest extends TestCase
         $this->assertTrue($this->getNonPhpContentFile()->containsInlineHtml());
         $this->assertFalse($this->getOutputPrintingFile()->containsInlineHtml());
         $this->assertFalse($this->getFileContainingClassNameResolution()->containsInlineHtml());
+        $this->assertFalse($this->getClassWithFunctionImport()->containsInlineHtml());
     }
 
     public function testContainsClass()
@@ -70,6 +72,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonPhpContentFile()->containsClass());
         $this->assertFalse($this->getOutputPrintingFile()->containsClass());
         $this->assertFalse($this->getFileContainingClassNameResolution()->containsClass());
+        $this->assertTrue($this->getClassWithFunctionImport()->containsClass());
     }
 
     public function testGetNamespace()
@@ -80,6 +83,7 @@ class ReflectionFileTest extends TestCase
         $this->assertEquals('Rikudou\Tests\Data', $this->getClassWithEchoStatementFile()->getNamespace());
         $this->assertEquals('Rikudou\Tests\Data', $this->getClassWithInterfaceFile()->getNamespace());
         $this->assertEquals('Rikudou\Tests\Data', $this->getFunctionsFile()->getNamespace());
+        $this->assertEquals('Rikudou\\Tests\\Data', $this->getClassWithFunctionImport()->getNamespace());
 
         try {
             $this->getInlineHtmlFile()->getNamespace();
@@ -128,6 +132,7 @@ class ReflectionFileTest extends TestCase
         $this->assertTrue($this->getNonPhpContentFile()->printsOutput());
         $this->assertTrue($this->getOutputPrintingFile()->printsOutput());
         $this->assertFalse($this->getFileContainingClassNameResolution()->printsOutput());
+        $this->assertFalse($this->getClassWithFunctionImport()->printsOutput());
     }
 
     public function testContainsNamespace()
@@ -144,6 +149,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonPhpContentFile()->containsNamespace());
         $this->assertFalse($this->getOutputPrintingFile()->containsNamespace());
         $this->assertFalse($this->getFileContainingClassNameResolution()->containsNamespace());
+        $this->assertTrue($this->getClassWithFunctionImport()->containsNamespace());
     }
 
     public function testContainsPhpCode()
@@ -160,6 +166,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonPhpContentFile()->containsPhpCode());
         $this->assertTrue($this->getOutputPrintingFile()->containsPhpCode());
         $this->assertTrue($this->getFileContainingClassNameResolution()->containsPhpCode());
+        $this->assertTrue($this->getClassWithFunctionImport()->containsPhpCode());
     }
 
     public function testGetClass()
@@ -169,6 +176,7 @@ class ReflectionFileTest extends TestCase
         $this->assertEquals(ClassThatExtendsAndImplements::class, $this->getClassThatExtendsAndImplementsFile()->getClass()->getName());
         $this->assertEquals(ClassWithEchoStatement::class, $this->getClassWithEchoStatementFile()->getClass()->getName());
         $this->assertEquals(ClassWithInterface::class, $this->getClassWithInterfaceFile()->getClass()->getName());
+        $this->assertEquals(ClassWithFunctionImport::class, $this->getClassWithFunctionImport()->getClass()->getName());
 
         try {
             $this->getFunctionsFile()->getClass();
@@ -213,6 +221,7 @@ class ReflectionFileTest extends TestCase
         $this->assertFalse($this->getNonPhpContentFile()->containsFunctions());
         $this->assertFalse($this->getOutputPrintingFile()->containsFunctions());
         $this->assertFalse($this->getFileContainingClassNameResolution()->containsFunctions());
+        $this->assertFalse($this->getClassWithFunctionImport()->containsFunctions());
     }
 
     public function testGetFunctions()
@@ -236,6 +245,7 @@ class ReflectionFileTest extends TestCase
         $this->assertEquals([], $this->getNonPhpContentFile()->getFunctions());
         $this->assertEquals([], $this->getOutputPrintingFile()->getFunctions());
         $this->assertEquals([], $this->getFileContainingClassNameResolution()->getFunctions());
+        $this->assertEquals([], $this->getClassWithFunctionImport()->getFunctions());
     }
 
     public function testCache()
@@ -331,6 +341,11 @@ class ReflectionFileTest extends TestCase
     private function getClassWithEchoStatementFile()
     {
         return $this->getReflection('ClassWithEchoStatement.php');
+    }
+
+    private function getClassWithFunctionImport()
+    {
+        return $this->getReflection('ClassWithFunctionImport.php');
     }
 
     private function getClassWithInterfaceFile()
