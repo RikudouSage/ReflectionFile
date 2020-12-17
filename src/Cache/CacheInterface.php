@@ -9,6 +9,8 @@ interface CacheInterface
      *
      * @param string $filePath The absolute path to the file
      * @param int    $modified The unix timestamp of when the file was last modified
+     *
+     * @return void
      */
     public function setData(string $filePath, int $modified);
 
@@ -42,6 +44,8 @@ interface CacheInterface
      * Called to store the newly parsed data in cache
      *
      * @param CachedData $cachedData
+     *
+     * @return void
      */
     public function store(CachedData $cachedData);
 

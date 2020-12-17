@@ -14,12 +14,12 @@ use Rikudou\Cache\SimpleFileCache;
 
 class SimpleFileCacheTest extends TestCase
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         (new SimpleFileCache(self::getCacheDirectory()))->clearAll();
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         self::setUpBeforeClass();
         @unlink(sys_get_temp_dir() . '/rikudou-reflection-random-directory');

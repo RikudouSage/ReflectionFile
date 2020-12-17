@@ -9,6 +9,9 @@ class Token
      */
     private $type = T_UNKNOWN;
 
+    /**
+     * @var string
+     */
     private $typeString;
 
     /**
@@ -16,6 +19,11 @@ class Token
      */
     private $content;
 
+    /**
+     * Token constructor.
+     *
+     * @param array<mixed>|string $token
+     */
     public function __construct($token)
     {
         if (is_array($token)) {

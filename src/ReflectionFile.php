@@ -2,6 +2,8 @@
 
 namespace Rikudou;
 
+use ReflectionClass;
+use ReflectionFunction;
 use Rikudou\Cache\CachedData;
 use Rikudou\Cache\CacheInterface;
 use Rikudou\Exception\ReflectionException;
@@ -45,7 +47,7 @@ final class ReflectionFile
     private $namespace = null;
 
     /**
-     * @var array
+     * @var array<string>
      */
     private $functions = [];
 
@@ -62,9 +64,6 @@ final class ReflectionFile
      */
     public function __construct(string $file, ?CacheInterface $cache = null)
     {
-        if (!defined('T_UNKNOWN')) {
-            require_once __DIR__ . '/../globals.php';
-        }
         if (!file_exists($file)) {
             throw new ReflectionException("The file '{$file}' does not exist");
         }
@@ -76,9 +75,9 @@ final class ReflectionFile
      * @throws ReflectionException
      * @throws \ReflectionException
      *
-     * @return \ReflectionClass
+     * @return ReflectionClass<object>
      */
-    public function getClass(): \ReflectionClass
+    public function getClass(): ReflectionClass
     {
         $this->parse();
         if (!$this->containsClass()) {
@@ -90,7 +89,7 @@ final class ReflectionFile
         }
         $class .= $this->class;
 
-        return new \ReflectionClass($class);
+        return new ReflectionClass($class);
     }
 
     /**
@@ -163,7 +162,7 @@ final class ReflectionFile
     /**
      * @throws \ReflectionException
      *
-     * @return \ReflectionFunction[]
+     * @return ReflectionFunction[]
      */
     public function getFunctions(): array
     {
@@ -173,7 +172,7 @@ final class ReflectionFile
             if ($this->containsNamespace()) {
                 $function = $this->getNamespace() . '\\' . $function;
             }
-            $result[] = new \ReflectionFunction($function);
+            $result[] = new ReflectionFunction($function);
         }
 
         return $result;
@@ -189,6 +188,9 @@ final class ReflectionFile
         return !!count($this->functions);
     }
 
+    /**
+     * @return void
+     */
     private function parse()
     {
         if (!$this->parsed) {
@@ -281,6 +283,10 @@ final class ReflectionFile
                             $this->namespace .= $token->getContent();
                             break;
                         case T_UNKNOWN:
+                            $currentMode = $modes['none'];
+                            break;
+                        case T_NAME_QUALIFIED:
+                            $this->namespace = $token->getContent();
                             $currentMode = $modes['none'];
                             break;
                     }

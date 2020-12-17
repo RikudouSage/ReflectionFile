@@ -2,40 +2,40 @@
 
 namespace Rikudou\Cache;
 
-class CachedData
+final class CachedData
 {
     /**
      * @var bool
      */
-    protected $containsInlineHtml = false;
+    private $containsInlineHtml = false;
 
     /**
      * @var bool
      */
-    protected $containsPhpCode = false;
+    private $containsPhpCode = false;
 
     /**
      * @var bool
      */
-    protected $printsOutput = false;
+    private $printsOutput = false;
 
     /**
      * @var string|null
      */
-    protected $class = null;
+    private $class = null;
 
     /**
      * @var string|null
      */
-    protected $namespace = null;
+    private $namespace = null;
 
     /**
      * @var string[]
      */
-    protected $functions = [];
+    private $functions = [];
 
     /**
-     * @param array $an_array
+     * @param array<string, mixed> $an_array
      *
      * @internal
      *

@@ -3,18 +3,13 @@ dist: xenial
 
 matrix:
   include:
-    - php: 7.1
-      env:
-        - USE_FIXER="1"
-    - php: 7.2
-      env:
-        - USE_COVERAGE="1"
-        - USE_PHPSTAN="1"
-        - USE_FIXER="1"
-        - PHPUNIT_FLAGS="--coverage-clover ./tmp/clover.xml"
     - php: 7.3
+    - php: 7.4
       env:
-        - COMPOSER_FLAGS="--ignore-platform-reqs"
+        - USE_FIXER="1"
+    - php: 8.0
+      env:
+        - USE_PHPSTAN="1"
 
 cache:
   directories:
@@ -23,9 +18,9 @@ cache:
 install: composer install $COMPOSER_FLAGS
 
 script:
-  - vendor/bin/phpunit $PHPUNIT_FLAGS
   - '[[ $USE_FIXER != "1" ]] || vendor/bin/php-cs-fixer fix src/ --dry-run --verbose'
   - '[[ $USE_PHPSTAN != "1" ]] || composer phpstan'
+  - vendor/bin/phpunit $PHPUNIT_FLAGS
 
 after_script:
   - '[[ $USE_COVERAGE != "1" ]] || ./vendor/bin/php-coveralls --verbose'

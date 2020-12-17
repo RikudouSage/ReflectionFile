@@ -2,6 +2,11 @@
 
 namespace Rikudou\Cache;
 
+use LogicException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
+
 final class SimpleFileCache implements CacheInterface
 {
     /**
@@ -26,11 +31,11 @@ final class SimpleFileCache implements CacheInterface
         }
         if (file_exists($directory)) {
             if (!is_dir($directory)) {
-                throw new \LogicException("The path '{$directory}' already exists and is not an directory");
+                throw new LogicException("The path '{$directory}' already exists and is not an directory");
             }
         } else {
             if (!@mkdir($directory, 0777, true)) {
-                throw new \LogicException("The path '{$directory}' does not exist and could not be created");
+                throw new LogicException("The path '{$directory}' does not exist and could not be created");
             }
         }
         $this->directory = $directory;
@@ -106,7 +111,7 @@ final class SimpleFileCache implements CacheInterface
         $dir = dirname($this->getCachePath());
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0777, true)) {
-                throw new \LogicException("The cache directory '{$dir}' does not exist and could not be created");
+                throw new LogicException("The cache directory '{$dir}' does not exist and could not be created");
             }
         }
 
@@ -118,14 +123,14 @@ final class SimpleFileCache implements CacheInterface
      */
     public function clearAll(): void
     {
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator(
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(
                 $this->directory
             )
         );
 
         foreach ($iterator as $file) {
-            assert($file instanceof \SplFileInfo);
+            assert($file instanceof SplFileInfo);
             if ($file->isFile()) {
                 unlink($file->getPathname());
             }
